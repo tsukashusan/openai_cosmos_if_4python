@@ -42,15 +42,11 @@ class ResultAzureOpenAI:
 class azureOpenAI:
      
     _unique_instance = None
-
     OPEN_AI_URL : str = "https://%s/openai/deployments/%s/chat/completions?api-version=%s" % (os.getenv('OPEN_AI_URL'), os.getenv('OPEN_AI_MODEL_NAME'), os.getenv('OPEN_AI_API_VERSION'))
     OPEN_AI_KEY : str = os.getenv('OPEN_AI_KEY')
     MAX_TOKEN : int = int(os.getenv('MAX_TOKEN'))
     GPT_SYSTEM_SETTING : str = os.getenv('GPT_SYSTEM_SETTING')
 
-
-    # 条件2. コンストラクタの可視性をprivateとする。
-    ## pythonの場合、コンストラクタをprivate定義できない。
     ## コンストラクタ呼び出しさせず、インスタンス取得をget_instanceに限定する。
     ## get_instanceからインスタンス取得を可能にするため、__init__は使用しない。
     ## 初期化時に、__new__が__init__よりも先に呼び出される。
@@ -62,7 +58,7 @@ class azureOpenAI:
     def __internal_new__(cls):
         return super().__new__(cls)
 
-    # 条件3:同じ型のインスタンスを返す `getInstance()` クラスメソッドを定義する。
+    # 同じ型のインスタンスを返す `getInstance()` クラスメソッドを定義する。
     @classmethod
     def get_instance(cls):
         # インスタンス未生成の場合
