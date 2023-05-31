@@ -1,0 +1,8 @@
+###
+POST http://localhost:7071/api/hello
+content-type: application/json
+
+{
+    "msg": "こんにちは",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+}
