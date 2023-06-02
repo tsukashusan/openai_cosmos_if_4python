@@ -1,6 +1,5 @@
 import aiohttp
 import os
-import json
 from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
 from enum import Enum
@@ -37,6 +36,7 @@ class RequestAzureOpenAI:
 @dataclass
 class ResultAzureOpenAI:
     result : ChatCompletionArray
+    totalToken : int
     error: any = None
 
 class azureOpenAI:
@@ -67,15 +67,16 @@ class azureOpenAI:
         return cls._unique_instance
 
     def __create_msg(self, msg: str, history: ChatCompletionArray ) -> ChatCompletionArray:
-        completion = ChatCompletion(Role.USER, msg)
+        completion = ChatCompletion(Role.USER.value, msg)
         if history is not None:
+            history.messages = [ChatCompletion(Role.SYSTEM.value, self.GPT_SYSTEM_SETTING)] + history.messages
             history.messages.append(completion)
             return history
         else:
             completionArray = ChatCompletionArray(
                 [
-                    ChatCompletion(Role.SYSTEM, self.GPT_SYSTEM_SETTING),
-                    ChatCompletion(Role.USER, msg),
+                    ChatCompletion(Role.SYSTEM.value, self.GPT_SYSTEM_SETTING),
+                    completion,
                 ]
             )
             return completionArray
@@ -98,7 +99,7 @@ class azureOpenAI:
                 if result.get('choices'):
                     o = result['choices'][0]['message']
                     chatCompletion = ChatCompletion(o['role'], o['content'])
-                    ret = ResultAzureOpenAI([chatCompletion], None)
+                    ret = ResultAzureOpenAI([chatCompletion], result['usage']['total_tokens'], None)
                     return ret
                 else:
-                    return ResultAzureOpenAI(None, result['error'])
+                    return ResultAzureOpenAI(None, None, result['error'])

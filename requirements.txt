@@ -4,7 +4,6 @@
 
 azure-functions
 python-dotenv
-asyncio
 aiohttp
 dataclasses-json
-typing
+azure-cosmos
