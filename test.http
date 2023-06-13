@@ -1,8 +1,17 @@
 ###
-POST http://localhost:7071/api/hello
+POST http://localhost:7071/api/langsql
 content-type: application/json
 
 {
-    "msg": "こんにちは",
+    "message": "仕入先の総件数をおしえてください。",
     "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
 }
+
+###
+POST http://localhost:7071/api/langsql
+content-type: application/json
+
+{
+    "message": "売上金額の総計を計算して、円で答えてください。",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+} 

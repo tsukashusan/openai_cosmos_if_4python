@@ -4,6 +4,12 @@ from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
 from enum import Enum
 from dotenv import load_dotenv
+from langchain.llms.openai import AzureOpenAI
+from langchain import SQLDatabase, SQLDatabaseChain
+from langchain.callbacks import get_openai_callback
+import logging
+from sqlalchemy.engine import URL
+import openai
 
 load_dotenv()
 
@@ -30,7 +36,7 @@ class ChatCompletionArray:
 class RequestAzureOpenAI:
     msg: str
     id : str
-    history : ChatCompletionArray
+    history : ChatCompletionArray = None
 
 @dataclass_json
 @dataclass
@@ -103,3 +109,27 @@ class azureOpenAI:
                     return ret
                 else:
                     return ResultAzureOpenAI(None, None, result['error'])
+                
+    async def requestSQL(self, request: RequestAzureOpenAI) -> ResultAzureOpenAI:
+        connection_url = URL.create(
+            "mssql+pyodbc",
+            username=os.getenv('MS_SQL_USERNAME'),
+            password=os.getenv('MS_SQL_PASSWORD'),
+            host=os.getenv('MS_SQL_HOST'),
+            port=int(os.getenv('MS_SQL_PORT')),
+            database=os.getenv('MS_SQL_DATABASE'),
+            query={"driver": "ODBC Driver 17 for SQL Server"})
+        db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
+        openai.api_type = "azure" 
+        openai.api_base = "https://%s/" % os.getenv('OPEN_AI_URL')
+        openai.api_version = os.getenv('OPEN_AI_API_VERSION')
+        openai.api_key = os.getenv('OPENAI_API_KEY')
+        llm = AzureOpenAI(
+            temperature=0.9,
+            deployment_name=os.getenv('OPEN_AI_MODEL_NAME'),
+            )
+        db_chain = SQLDatabaseChain(llm=llm, database=db, verbose=True)
+        ret = db_chain.run(request.msg)
+
+        logging.info(ret)
+        return ResultAzureOpenAI([ChatCompletion('assistant', ret)], -1, None)
