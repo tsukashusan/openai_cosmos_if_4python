@@ -10,6 +10,8 @@ from langchain.callbacks import get_openai_callback
 import logging
 from sqlalchemy.engine import URL
 import openai
+import re
+import json
 
 load_dotenv()
 
@@ -122,7 +124,7 @@ class azureOpenAI:
         db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
         openai.api_type = "azure" 
         openai.api_base = "https://%s/" % os.getenv('OPEN_AI_URL')
-        openai.api_version = os.getenv('OPEN_AI_API_VERSION')
+        openai.api_version = os.getenv('OPENAI_API_VERSION')
         openai.api_key = os.getenv('OPENAI_API_KEY')
         llm = AzureOpenAI(
             temperature=0.9,
@@ -131,5 +133,38 @@ class azureOpenAI:
         db_chain = SQLDatabaseChain(llm=llm, database=db, verbose=True)
         ret = db_chain.run(request.msg)
 
-        logging.info(ret)
-        return ResultAzureOpenAI([ChatCompletion('assistant', ret)], -1, None)
+        logging.info("before value:%s", ret)
+
+        retjson = None
+        if('Question:' in ret and 'SQLQuery:' in ret):
+            ret = re.split('Question:|SQLQuery:', ret)
+            retjson = {
+                'value':  ret[0].strip(),
+                'Question' : ret[1].strip(),
+                'SQLQuery' : ret[2].strip()
+            }
+        elif('Question:' in ret):
+            ret = re.split('Question:', ret)
+            retjson = {
+                'value':  ret[0].strip(),
+                'Question' : ret[1].strip()
+            }
+        elif('SQLQuery:' in ret):
+            ret = re.split('SQLQuery:', ret)
+            retjson = {
+                'value':  ret[0].strip(),
+                'SQLQuery' : ret[1].strip()
+            }
+        elif('value:' in ret):
+            ret = re.split('value:', ret)
+            retjson = {
+                'value':  ret[0].strip()
+            }
+        else:
+            retjson = {
+                'value':  ret.strip()
+            }                   
+        logging.info("after value(ret):%s", json.dumps(retjson, ensure_ascii=False))
+        logging.info("after value(json):%s", json.dumps(retjson, ensure_ascii=False))
+
+        return ResultAzureOpenAI([ChatCompletion('assistant', retjson)], -1, None)

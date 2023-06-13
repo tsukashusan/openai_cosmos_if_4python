@@ -1,5 +1,12 @@
+@remoteHost = openai-if-python.azurewebsites.net
+@remotePort = 443
+@localHost = localhost
+@localPort = 7071
+@accessKey = LCsRQB1PRyjb6o1lTks0d44Tpr-i-omO5TzcUW3jVlUXAzFuPlcgcg==
+
 ###
-POST http://localhost:7071/api/langsql
+POST /api/langsql
+Host: {{localHost}}:{{localPort}}
 content-type: application/json
 
 {
@@ -8,10 +15,31 @@ content-type: application/json
 }
 
 ###
-POST http://localhost:7071/api/langsql
+POST /api/langsql
+Host: {{localHost}}:{{localPort}}
 content-type: application/json
 
 {
     "message": "売上金額の総計を計算して、円で答えてください。",
     "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
-} 
+}
+###
+POST /api/langsql?code={{accessKey}}
+Host: {{remoteHost}}:{{remotePort}}
+content-type: application/json
+
+{
+    "message": "全受注の売上金額の総計を計算して、「売上金額の総計は¥xxx,xxx-です。」の形式で答えてください。",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+}
+
+###
+POST /api/langsql?code={{accessKey}}
+Host: {{remoteHost}}:{{remotePort}}
+content-type: application/json
+
+{
+    "message": "売上TOP10の顧客を教えてください。回答は「順位 # 位 顧客名 ### 売上金額 ###円」と売上の高い順で答えてください。",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+}
+
