@@ -167,4 +167,4 @@ class azureOpenAI:
         logging.info("after value(ret):%s", json.dumps(retjson, ensure_ascii=False))
         logging.info("after value(json):%s", json.dumps(retjson, ensure_ascii=False))
 
-        return ResultAzureOpenAI([ChatCompletion('assistant', retjson)], -1, None)
+        return ResultAzureOpenAI([ChatCompletion('assistant', retjson['value'])], -1, None)
