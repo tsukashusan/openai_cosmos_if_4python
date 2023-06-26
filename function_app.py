@@ -70,6 +70,6 @@ def request_openai(req: func.HttpRequest,
         outputDocument.set(func.Document.from_dict(cosmosoutput))
         chatCompletion : ChatCompletion = ret.result[len(ret.result) - 1]
         
-        return func.HttpResponse(body=chatCompletion.to_json(ensure_ascii=False), headers=responseHeaders)
+        return func.HttpResponse(body=json.dumps({'message': chatCompletion.content}, ensure_ascii=False), headers=responseHeaders)
     else:
         return func.HttpResponse(body=ret.to_json(ensure_ascii=False), headers=responseHeaders)

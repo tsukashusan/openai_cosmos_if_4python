@@ -130,7 +130,7 @@ class azureOpenAI:
             temperature=0.9,
             deployment_name=os.getenv('OPEN_AI_MODEL_NAME'),
             )
-        db_chain = SQLDatabaseChain(llm=llm, database=db, verbose=True)
+        db_chain = SQLDatabaseChain.from_llm(llm=llm, db=db, verbose=True)
         ret = db_chain.run(request.msg)
 
         logging.info("before value:%s", ret)
@@ -167,4 +167,4 @@ class azureOpenAI:
         logging.info("after value(ret):%s", json.dumps(retjson, ensure_ascii=False))
         logging.info("after value(json):%s", json.dumps(retjson, ensure_ascii=False))
 
-        return ResultAzureOpenAI([ChatCompletion('assistant', retjson)], -1, None)
+        return ResultAzureOpenAI([ChatCompletion('assistant', retjson['value'])], -1, None)

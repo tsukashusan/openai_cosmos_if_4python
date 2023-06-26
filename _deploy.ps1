@@ -30,4 +30,9 @@ az webapp config appsettings set --resource-group demo1 --name "openai-if-python
 
 $pyfiles = Get-ChildItem -recurse .\* -Include azureOpenAI.py,cosmosdb.py,function_app.py,host.json,requirements.txt,.python_packages -Force
 Compress-Archive -Path $pyfiles  -DestinationPath ..\pythonapp.zip -Force
-az functionapp deployment source config-zip --resource-group "demo1" --name "openai-if-python" --src ..\pythonapp.zip --build-remote true --verbose
+#az functionapp deployment slot list --name $functionName --resource-group $resourceGroupName
+#for production
+az functionapp deployment source config-zip --resource-group $resourceGroupName --name $functionName --src ..\pythonapp.zip --build-remote true --verbose
+
+#for slot
+az functionapp deployment source config-zip --resource-group $resourceGroupName --name $functionName --src ..\pythonapp.zip --slot $slotName --build-remote true --verbose

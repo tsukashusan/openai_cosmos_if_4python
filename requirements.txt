@@ -10,3 +10,4 @@ azure-cosmos
 langchain
 openai
 pyodbc
+pip-upgrader
