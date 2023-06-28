@@ -6,7 +6,6 @@ from enum import Enum
 from dotenv import load_dotenv
 from langchain.llms.openai import AzureOpenAI
 from langchain import SQLDatabase, SQLDatabaseChain
-from langchain.callbacks import get_openai_callback
 import logging
 from sqlalchemy.engine import URL
 import openai
@@ -50,7 +49,7 @@ class ResultAzureOpenAI:
 class azureOpenAI:
      
     _unique_instance = None
-    OPEN_AI_URL : str = "https://%s/openai/deployments/%s/chat/completions?api-version=%s" % (os.getenv('OPEN_AI_URL'), os.getenv('OPEN_AI_MODEL_NAME'), os.getenv('OPEN_AI_API_VERSION'))
+    OPEN_AI_URL : str = f"https://{os.getenv('OPEN_AI_URL')}/openai/deployments/{os.getenv('OPEN_AI_MODEL_NAME')}/chat/completions?api-version={os.getenv('OPEN_AI_API_VERSION')}"
     OPEN_AI_KEY : str = os.getenv('OPEN_AI_KEY')
     MAX_TOKEN : int = int(os.getenv('MAX_TOKEN'))
     GPT_SYSTEM_SETTING : str = os.getenv('GPT_SYSTEM_SETTING')
@@ -123,7 +122,7 @@ class azureOpenAI:
             query={"driver": "ODBC Driver 17 for SQL Server"})
         db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
         openai.api_type = "azure" 
-        openai.api_base = "https://%s/" % os.getenv('OPEN_AI_URL')
+        openai.api_base = f"https://{os.getenv('OPEN_AI_URL')}/"
         openai.api_version = os.getenv('OPENAI_API_VERSION')
         openai.api_key = os.getenv('OPENAI_API_KEY')
         llm = AzureOpenAI(
