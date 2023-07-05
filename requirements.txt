@@ -16,3 +16,4 @@ pycryptodome
 tiktoken
 faiss-cpu
 pip-upgrader
+pypdf

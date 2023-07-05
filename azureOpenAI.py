@@ -4,7 +4,7 @@ from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
 from enum import Enum
 from dotenv import load_dotenv
-from langchain.llms.openai import OpenAIChat, AzureOpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain import SQLDatabase, SQLDatabaseChain
 import logging
 from sqlalchemy.engine import URL
@@ -125,9 +125,10 @@ class azureOpenAI:
         openai.api_base = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/"
         openai.api_version = os.getenv('AZURE_OPENAI_API_VERSION')
         openai.api_key = os.getenv('AZURE_OPENAI_API_KEY')
-        llm = OpenAIChat(
-            engine=os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME'),
-            temperature=0
+        llm = ChatOpenAI(
+            model_kwargs={"engine" : os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME')},
+            temperature=0,
+            openai_api_key = openai.api_key
         )
         #llm = AzureOpenAI(
         #    deployment_name=os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME'),

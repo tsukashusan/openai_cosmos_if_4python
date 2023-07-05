@@ -87,7 +87,6 @@ def request_openai(req: func.HttpRequest,
 def request_openai_search_document(req: func.HttpRequest,
                    context: func.Context,
                    outputDocument: func.Out[func.Document]) -> func.HttpResponse:
-    aoai: azureOpenAI = azureOpenAI.get_instance()
     s : str = req.get_body().decode('utf-8')
     req = json.loads(s)
     ret = langchainDocument.requestUsingDocument(req['message'], context)

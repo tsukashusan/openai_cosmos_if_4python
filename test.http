@@ -39,7 +39,34 @@ Host: {{remoteHost}}:{{remotePort}}
 content-type: application/json
 
 {
-    "message": "売上TOP10の顧客を教えてください。回答は「順位 # 位 顧客名 ### 売上金額 ###円」と売上の高い順で答えてください。",
+    "message": "全受注データの売上TOP5の顧客を教えてください。回答は「順位 # 位 顧客名 ### 売上金額 ###円」と売上の高い順で答えてください。",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+}
+###
+POST /api/langsql?code={{accessKey}}
+Host: {{remoteHost}}:{{remotePort}}
+content-type: application/json
+
+{
+    "message": "テーブル一覧をください",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+}
+###
+POST /api/langsql
+Host: {{localHost}}:{{localPort}}
+content-type: application/json
+
+{
+    "message": "全受注データの売上TOP5の顧客を教えてください。回答は「順位 # 位 顧客名 ### 売上金額 ###円」と売上の高い順で答えてください。",
     "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
 }
 
+###
+POST /api/searchdoc
+Host: {{localHost}}:{{localPort}}
+content-type: application/json
+
+{
+    "message": "回答はすべて日本語で、日本民間公益活動連携機構の試用期間を教えてください。",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+}
