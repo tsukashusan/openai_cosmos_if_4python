@@ -4,7 +4,7 @@ from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
 from enum import Enum
 from dotenv import load_dotenv
-from langchain.llms.openai import AzureOpenAI
+from langchain.llms.openai import OpenAIChat, AzureOpenAI
 from langchain import SQLDatabase, SQLDatabaseChain
 from langchain.callbacks import get_openai_callback
 import logging
@@ -50,8 +50,8 @@ class ResultAzureOpenAI:
 class azureOpenAI:
      
     _unique_instance = None
-    OPEN_AI_URL : str = "https://%s/openai/deployments/%s/chat/completions?api-version=%s" % (os.getenv('OPEN_AI_URL'), os.getenv('OPEN_AI_MODEL_NAME'), os.getenv('OPEN_AI_API_VERSION'))
-    OPEN_AI_KEY : str = os.getenv('OPEN_AI_KEY')
+    OPEN_AI_URL : str = "https://%s.openai.azure.com/openai/deployments/%s/chat/completions?api-version=%s" % (os.getenv('AZURE_OPENAI_API_INSTANCE_NAME'), os.getenv('AZURE_OPENAI_API_INSTANCE_NAME'), os.getenv('AZURE_OPENAI_API_VERSION'))
+    OPEN_AI_KEY : str = os.getenv('AZURE_OPENAI_API_KEY')
     MAX_TOKEN : int = int(os.getenv('MAX_TOKEN'))
     GPT_SYSTEM_SETTING : str = os.getenv('GPT_SYSTEM_SETTING')
 
@@ -123,13 +123,17 @@ class azureOpenAI:
             query={"driver": "ODBC Driver 17 for SQL Server"})
         db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
         openai.api_type = "azure" 
-        openai.api_base = "https://%s/" % os.getenv('OPEN_AI_URL')
-        openai.api_version = os.getenv('OPENAI_API_VERSION')
-        openai.api_key = os.getenv('OPENAI_API_KEY')
-        llm = AzureOpenAI(
-            temperature=0.9,
-            deployment_name=os.getenv('OPEN_AI_MODEL_NAME'),
-            )
+        openai.api_base = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/"
+        openai.api_version = os.getenv('AZURE_OPENAI_API_VERSION')
+        openai.api_key = os.getenv('AZURE_OPENAI_API_KEY')
+        llm = OpenAIChat(
+            engine=os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME'),
+            temperature=0
+        )
+        #llm = AzureOpenAI(
+        #    deployment_name=os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME'),
+        #    temperature=0
+        #    )
         db_chain = SQLDatabaseChain.from_llm(llm=llm, db=db, verbose=True)
         ret = db_chain.run(request.msg)
 
