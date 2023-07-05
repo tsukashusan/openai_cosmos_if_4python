@@ -6,7 +6,6 @@ from enum import Enum
 from dotenv import load_dotenv
 from langchain.llms.openai import OpenAIChat, AzureOpenAI
 from langchain import SQLDatabase, SQLDatabaseChain
-from langchain.callbacks import get_openai_callback
 import logging
 from sqlalchemy.engine import URL
 import openai

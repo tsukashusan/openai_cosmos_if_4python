@@ -10,4 +10,9 @@ azure-cosmos
 langchain
 openai
 pyodbc
+pydantic
+pypdf
+pycryptodome
+tiktoken
+faiss-cpu
 pip-upgrader
