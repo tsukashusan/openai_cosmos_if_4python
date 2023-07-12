@@ -104,13 +104,13 @@ def requestUsingDocument(msg: str, context):
                     func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
                 )
             )
-
-        llm = AzureOpenAI(
+        llm = AzureChatOpenAI(
+            max_tokens=os.getenv('AZURE_OPENAI_MAX_TOKEN_FOR_DOC_SEARCH'),
             temperature=0,
             openai_api_base=f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/",
             openai_api_key=os.getenv('AZURE_OPENAI_API_KEY'),
             openai_api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
-            deployment_name=os.getenv('AZURE_OPENAI_MODEL_FOR_DDOC_SEARCH'))
+            deployment_name=os.getenv('AZURE_OPENAI_MODEL_FOR_DOC_SEARCH'))
         agent = initialize_agent(
             agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,
             tools=tools,
