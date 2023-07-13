@@ -17,3 +17,5 @@ tiktoken
 faiss-cpu
 pip-upgrader
 pypdf
+azure-identity
+azure.storage.blob

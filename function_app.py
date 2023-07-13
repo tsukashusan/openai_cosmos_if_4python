@@ -84,12 +84,12 @@ def request_openai(req: func.HttpRequest,
                       connection="cosmos_connection_str",
                       create_if_not_exists=True,
                       partition_key="/userid")
-def request_openai_search_document(req: func.HttpRequest,
+async def request_openai_search_document(req: func.HttpRequest,
                    context: func.Context,
                    outputDocument: func.Out[func.Document]) -> func.HttpResponse:
     s : str = req.get_body().decode('utf-8')
     req = json.loads(s)
-    ret = langchainDocument.requestUsingDocument(req['message'], context)
+    ret = await langchainDocument.requestUsingDocument(req['message'], context)
     responseHeaders : dict[str, str] = {"Access-Control-Allow-Origin": "*", 'Content-Type': "application/json"}
     if ret.result is not None:
         uuida : str = str(uuid.uuid4())

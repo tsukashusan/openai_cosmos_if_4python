@@ -70,3 +70,14 @@ content-type: application/json
     "message": "回答はすべて日本語で、日本民間公益活動連携機構の試用期間を教えてください。",
     "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
 }
+
+###
+POST /api/searchdoc?code={{accessKey}}
+Host: {{remoteHost}}:{{remotePort}}
+content-type: application/json
+
+{
+    "message": "回答はすべて日本語で、日本民間公益活動連携機構の試用期間を教えてください。",
+    "id" : "17C4C12B-97F3-4FA2-AB69-D14FD38E3FE4"
+}
+

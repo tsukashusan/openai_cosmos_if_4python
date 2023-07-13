@@ -2,7 +2,6 @@ import os
 import platform
 import logging
 from pydantic import BaseModel, Field
-from langchain.llms.openai import AzureOpenAI
 from langchain.agents import Tool
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
@@ -14,15 +13,47 @@ from langchain.agents import AgentType
 import openai
 from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
 from azureOpenAI import ResultAzureOpenAI, ChatCompletion
+from urllib.parse import urlparse
 
-s = platform.system()
+
+platform_system = platform.system()
 agent = None
 
 
 class DocumentInput(BaseModel):
     question: str = Field()
 
-def requestUsingDocument(msg: str, context):
+
+def _is_valid_url(url: str) -> bool:
+    """Check if the url is valid."""
+    parsed = urlparse(url)
+    return bool(parsed.netloc) and bool(parsed.scheme)
+
+async def downloadFromBlob(account_url) -> str:
+    from azure.identity.aio import DefaultAzureCredential
+    from azure.storage.blob import BlobServiceClient
+    from tempfile import NamedTemporaryFile
+    # alternatively, use the credential as an async context manager
+    parsed = urlparse(account_url)
+    logging.info(f"parsed={parsed}")
+    path_array = parsed.path.split('/')
+    logging.info(f"path_array={path_array}")
+    container_index = int(os.getenv('BLOB_CONTAINER_INDEX'))
+    container = path_array[container_index]
+    credential = DefaultAzureCredential()
+    tmpfile = NamedTemporaryFile(suffix=".pdf")
+    async with credential:
+        blob_service_client = BlobServiceClient(f"{parsed.scheme}://{parsed.netloc}", credential=credential)
+        with blob_service_client:
+            blob_path_start_index = int(os.getenv('BLOB_PATH_START_INDEX'))
+            blob_path = '/'.join(path_array[blob_path_start_index:])
+            blob_client = blob_service_client.get_blob_client(container=container, blob=blob_path)
+            with open(file=tmpfile.name, mode="wb") as sample_blob:
+                download_stream = blob_client.download_blob()
+                sample_blob.write(download_stream.readall())
+    return tmpfile.name
+    
+async def requestUsingDocument(msg: str, context):
     global agent
     if agent is None:
         foldername=context.function_directory
@@ -37,29 +68,24 @@ def requestUsingDocument(msg: str, context):
             temperature=0,
             openai_api_key=openai.api_key
         )
-        #llmChat = AzureOpenAI(
-        #    temperature=0,
-        #    deployment_name=os.getenv('OPEN_AI_MODEL_FOR_CHAT_NAME'),
-        #    openai_api_type="azure",
-        #    openai_api_version=os.getenv('OPENAI_API_VERSION')
-        #    )
-        separator = "/"
-        if s == 'Windows':
-            separator = "\\"
+
+        #separator = "/"
+        #if platform_system == 'Windows':
+        #    separator = "\\"
 
         tools = []
         files = [
-            # https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
-            {
-                "name": "日本民間公益活動連携機構 就業規則", 
-                "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}rule_16.pdf",
-            }, 
-            # https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
-            {
-                "name": "中小規模事業場モデル就業規則", 
-                "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}syugyoukisoku_model.pdf"
-            }
-            # https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+            ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+            #{
+            #    "name": "日本民間公益活動連携機構 就業規則", 
+            #    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}rule_16.pdf",
+            #}, 
+            ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+            #{
+            #    "name": "中小規模事業場モデル就業規則", 
+            #    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}syugyoukisoku_model.pdf"
+            #}
+            ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
             #{
             #    "name": "日本民間公益活動連携機構 就業規則", 
             #    "path": f"https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf",
@@ -69,14 +95,36 @@ def requestUsingDocument(msg: str, context):
             #    "name": "中小規模事業場モデル就業規則", 
             #    "path": f"https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf"
             #}
+            # https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+            {
+                "name": "日本民間公益活動連携機構 就業規則", 
+                "path": "https://filessearch.blob.core.windows.net/data/rule_16.pdf",
+            }, 
+            # https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+            {
+                "name": "中小規模事業場モデル就業規則", 
+                "path": "https://filessearch.blob.core.windows.net/data/syugyoukisoku_model.pdf"
+            }
+            ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+            #{
+            #    "name": "日本民間公益活動連携機構 就業規則", 
+            #    "path": "https://filessearch.blob.core.windows.net/data/syugyoukisoku_model.pdf?sp=r&st=2023-07-12T13:16:18Z&se=2100-07-12T21:16:18Z&spr=https&sv=2022-11-02&sr=b&sig=oCzstH0qDJ0lPQ8myENV0pBcKLN5aB3vlXwGjkjseJo%3D",
+            #}, 
+            ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+            #{
+            #    "name": "中小規模事業場モデル就業規則", 
+            #    "path": f"https://filessearch.blob.core.windows.net/data/rule_16.pdf?sp=r&st=2023-07-12T13:17:38Z&se=2100-07-12T21:17:38Z&spr=https&sv=2022-11-02&sr=b&sig=NOpS9uVg1rz5ZfgcG8580I9Pyriw9WNLEco1EQTr%2BW0%3D"
+            #}
         ]
         
         for file in files:
             cwd = os.getcwd()
             logging.info(f"curdir={cwd}")
-            a = os.path.isfile(file["path"])
-            logging.info(f'{file["path"]} is exists : {a}')
-            loader = PyPDFLoader(file["path"])
+            a = os.path.isfile(file['path'])
+            logging.info(f"{file['path']} is exists : {a}")
+            file_path = await downloadFromBlob(account_url=file['path']) if not a and _is_valid_url(file['path']) else file['path']
+            logging.info(f"file_path={file_path}")
+            loader = PyPDFLoader(file_path)
             pages = loader.load_and_split()
             text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
             docs = text_splitter.split_documents(pages)
