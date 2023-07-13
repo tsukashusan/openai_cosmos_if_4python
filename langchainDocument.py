@@ -29,10 +29,10 @@ def _is_valid_url(url: str) -> bool:
     parsed = urlparse(url)
     return bool(parsed.netloc) and bool(parsed.scheme)
 
-async def downloadFromBlob(account_url) -> str:
-    from azure.identity.aio import DefaultAzureCredential
-    from azure.storage.blob import BlobServiceClient
-    from tempfile import NamedTemporaryFile
+async def downloadFromBlob(download_filepath, account_url):
+    from azure.identity.aio import ManagedIdentityCredential, ChainedTokenCredential, DefaultAzureCredential
+    from azure.storage.blob.aio import BlobServiceClient
+
     # alternatively, use the credential as an async context manager
     parsed = urlparse(account_url)
     logging.info(f"parsed={parsed}")
@@ -40,20 +40,21 @@ async def downloadFromBlob(account_url) -> str:
     logging.info(f"path_array={path_array}")
     container_index = int(os.getenv('BLOB_CONTAINER_INDEX'))
     container = path_array[container_index]
-    credential = DefaultAzureCredential()
-    tmpfile = NamedTemporaryFile(suffix=".pdf")
-    async with credential:
-        blob_service_client = BlobServiceClient(f"{parsed.scheme}://{parsed.netloc}", credential=credential)
-        with blob_service_client:
-            blob_path_start_index = int(os.getenv('BLOB_PATH_START_INDEX'))
-            blob_path = '/'.join(path_array[blob_path_start_index:])
-            blob_client = blob_service_client.get_blob_client(container=container, blob=blob_path)
-            with open(file=tmpfile.name, mode="wb") as sample_blob:
-                download_stream = blob_client.download_blob()
-                sample_blob.write(download_stream.readall())
-    return tmpfile.name
+    account_url = f"{parsed.scheme}://{parsed.netloc}"
+    async with ChainedTokenCredential(ManagedIdentityCredential(), DefaultAzureCredential()) as credential:
+        async with BlobServiceClient(account_url=account_url, credential=credential) as blob_service_client:
+            async with blob_service_client.get_container_client(container) as containerclient:
+                blob_path_start_index = int(os.getenv('BLOB_PATH_START_INDEX'))
+                blob_path = '/'.join(path_array[blob_path_start_index:])
+                async with containerclient.get_blob_client(blob_path) as blob_client:
+                    with open(file=download_filepath, mode="wb") as sample_blob:
+                        download_stream = await blob_client.download_blob()
+                        a = await download_stream.readall()
+                        sample_blob.write(a)
     
 async def requestUsingDocument(msg: str, context):
+    from tempfile import NamedTemporaryFile
+
     global agent
     if agent is None:
         foldername=context.function_directory
@@ -122,7 +123,9 @@ async def requestUsingDocument(msg: str, context):
             logging.info(f"curdir={cwd}")
             a = os.path.isfile(file['path'])
             logging.info(f"{file['path']} is exists : {a}")
-            file_path = await downloadFromBlob(account_url=file['path']) if not a and _is_valid_url(file['path']) else file['path']
+            tmpfile = NamedTemporaryFile(suffix=".pdf")
+            file_path = tmpfile.name
+            await downloadFromBlob(download_filepath=file_path, account_url=file['path']) if not a and _is_valid_url(file['path']) else file['path']
             logging.info(f"file_path={file_path}")
             loader = PyPDFLoader(file_path)
             pages = loader.load_and_split()
