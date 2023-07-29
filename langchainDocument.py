@@ -163,7 +163,7 @@ async def requestUsingDocument(msg: str, context):
             openai_api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
             deployment_name=os.getenv('AZURE_OPENAI_MODEL_FOR_DOC_SEARCH'))
         agent = initialize_agent(
-            agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+            agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
             tools=tools,
             llm=llm,
             verbose=True
