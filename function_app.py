@@ -14,7 +14,7 @@ load_dotenv()
 
 completion_format_user = {'role' : 'user', 'content' : None}
 max_token = int(os.getenv('MAX_TOKEN'))
-app = func.FunctionApp()
+app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 @app.function_name(name="HttpTrigger1")
 @app.route(route="hello") # HTTP Trigger
 @app.cosmos_db_output(arg_name="outputDocument", 

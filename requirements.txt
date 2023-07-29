@@ -7,7 +7,8 @@ python-dotenv
 aiohttp
 dataclasses-json
 azure-cosmos
-langchain
+langchain==0.0.247
+langchain_experimental==0.0.7
 openai
 pyodbc
 pydantic
