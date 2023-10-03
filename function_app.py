@@ -9,10 +9,11 @@ import uuid
 from cosmosdb import cosmosdb
 import logging
 import langchainDocument
+from distutils.util import strtobool
 
 load_dotenv()
 
-DEBUG_MODE = bool(os.getenv('DEBUG_MODE')) or False
+DEBUG_MODE : bool = strtobool(os.getenv('DEBUG_MODE')) or False
 completion_format_user = {'role' : 'user', 'content' : None}
 max_token = int(os.getenv('MAX_TOKEN'))
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)

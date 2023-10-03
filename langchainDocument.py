@@ -1,7 +1,8 @@
 import os
 import platform
 import logging
-from pydantic import BaseModel, Field
+#from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 from langchain.agents import Tool
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
@@ -80,6 +81,7 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
         separator = "/"
         if platform_system == 'Windows':
             separator = "\\"
+        logging.info(f"DEBUG_MODE : {debug_mode}")
         files = None
         if debug_mode:
             files = [
@@ -169,7 +171,7 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
                 chunk_size=1
             )
             retriever = FAISS.from_documents(docs, embeddings).as_retriever()
-            qa = RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
+
             # Wrap retrievers in a Tool
             tools.append(
                 Tool(
