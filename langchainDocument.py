@@ -52,7 +52,7 @@ async def downloadFromBlob(download_filepath, account_url):
                         a = await download_stream.readall()
                         sample_blob.write(a)
     
-async def requestUsingDocument(msg: str, context):
+async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
     from tempfile import NamedTemporaryFile
 
     global agent
@@ -69,63 +69,87 @@ async def requestUsingDocument(msg: str, context):
             temperature=0,
             openai_api_key=openai.api_key
         )
+        #llmChat =AzureChatOpenAI(
+        #    max_tokens=os.getenv('AZURE_OPENAI_MAX_TOKEN_FOR_DOC_SEARCH'),
+        #    temperature=0,
+        #    openai_api_base=f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/",
+        #    openai_api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+        #    openai_api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
+        #    deployment_name=os.getenv('AZURE_OPENAI_MODEL_FOR_DOC_SEARCH'))
 
-        #separator = "/"
-        #if platform_system == 'Windows':
-        #    separator = "\\"
-
+        separator = "/"
+        if platform_system == 'Windows':
+            separator = "\\"
+        files = None
+        if debug_mode:
+            files = [
+                # https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+                {
+                    "name": "日本民間公益活動連携機構 就業規則", 
+                    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}rule_16.pdf",
+                }, 
+                # https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+                {
+                    "name": "中小規模事業場モデル就業規則", 
+                    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}syugyoukisoku_model.pdf"
+                }
+            ]
+        else:
+            files = [
+                ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+                #{
+                #    "name": "日本民間公益活動連携機構 就業規則", 
+                #    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}rule_16.pdf",
+                #}, 
+                ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+                #{
+                #    "name": "中小規模事業場モデル就業規則", 
+                #    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}syugyoukisoku_model.pdf"
+                #}
+                ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+                #{
+                #    "name": "日本民間公益活動連携機構 就業規則", 
+                #    "path": f"https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf",
+                #}, 
+                ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+                #{
+                #    "name": "中小規模事業場モデル就業規則", 
+                #    "path": f"https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf"
+                #}
+                # https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+                #{
+                #    "name": "日本民間公益活動連携機構 就業規則", 
+                #    "path": "https://filessearch.blob.core.windows.net/data/rule_16.pdf",
+                #}, 
+                ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+                #{
+                #    "name": "中小規模事業場モデル就業規則", 
+                #    "path": "https://filessearch.blob.core.windows.net/data/syugyoukisoku_model.pdf"
+                #}
+                # https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
+                {
+                    "name": "日本民間公益活動連携機構 就業規則", 
+                    "path": "https://filessearch.blob.core.windows.net/data/syugyoukisoku_model.pdf?sp=r&st=2023-07-12T13:16:18Z&se=2100-07-12T21:16:18Z&spr=https&sv=2022-11-02&sr=b&sig=oCzstH0qDJ0lPQ8myENV0pBcKLN5aB3vlXwGjkjseJo%3D",
+                }, 
+                # https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
+                {
+                    "name": "中小規模事業場モデル就業規則", 
+                    "path": f"https://filessearch.blob.core.windows.net/data/rule_16.pdf?sp=r&st=2023-07-12T13:17:38Z&se=2100-07-12T21:17:38Z&spr=https&sv=2022-11-02&sr=b&sig=NOpS9uVg1rz5ZfgcG8580I9Pyriw9WNLEco1EQTr%2BW0%3D"
+                }
+            ]
         tools = []
-        files = [
-            ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
-            #{
-            #    "name": "日本民間公益活動連携機構 就業規則", 
-            #    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}rule_16.pdf",
-            #}, 
-            ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
-            #{
-            #    "name": "中小規模事業場モデル就業規則", 
-            #    "path": f"{foldername}{separator}{os.getenv('DOC_DIRECTORY')}{separator}syugyoukisoku_model.pdf"
-            #}
-            ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
-            #{
-            #    "name": "日本民間公益活動連携機構 就業規則", 
-            #    "path": f"https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf",
-            #}, 
-            ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
-            #{
-            #    "name": "中小規模事業場モデル就業規則", 
-            #    "path": f"https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf"
-            #}
-            # https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
-            {
-                "name": "日本民間公益活動連携機構 就業規則", 
-                "path": "https://filessearch.blob.core.windows.net/data/rule_16.pdf",
-            }, 
-            # https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
-            {
-                "name": "中小規模事業場モデル就業規則", 
-                "path": "https://filessearch.blob.core.windows.net/data/syugyoukisoku_model.pdf"
-            }
-            ## https://www.janpia.or.jp/about/information/pdf/rule/rule_16.pdf
-            #{
-            #    "name": "日本民間公益活動連携機構 就業規則", 
-            #    "path": "https://filessearch.blob.core.windows.net/data/syugyoukisoku_model.pdf?sp=r&st=2023-07-12T13:16:18Z&se=2100-07-12T21:16:18Z&spr=https&sv=2022-11-02&sr=b&sig=oCzstH0qDJ0lPQ8myENV0pBcKLN5aB3vlXwGjkjseJo%3D",
-            #}, 
-            ## https://www.m-sensci.or.jp/_userdata/keieishien/syugyoukisoku_model.pdf
-            #{
-            #    "name": "中小規模事業場モデル就業規則", 
-            #    "path": f"https://filessearch.blob.core.windows.net/data/rule_16.pdf?sp=r&st=2023-07-12T13:17:38Z&se=2100-07-12T21:17:38Z&spr=https&sv=2022-11-02&sr=b&sig=NOpS9uVg1rz5ZfgcG8580I9Pyriw9WNLEco1EQTr%2BW0%3D"
-            #}
-        ]
-        
+
         for file in files:
             cwd = os.getcwd()
             logging.info(f"curdir={cwd}")
             a = os.path.isfile(file['path'])
             logging.info(f"{file['path']} is exists : {a}")
-            tmpfile = NamedTemporaryFile(suffix=".pdf")
-            file_path = tmpfile.name
-            await downloadFromBlob(download_filepath=file_path, account_url=file['path']) if not a and _is_valid_url(file['path']) else file['path']
+            if debug_mode:
+                file_path = file['path']
+            else:
+                tmpfile = NamedTemporaryFile(suffix=".pdf")
+                file_path = tmpfile.name
+                await downloadFromBlob(download_filepath=file_path, account_url=file['path']) if not a and _is_valid_url(file['path']) else file['path']
             logging.info(f"file_path={file_path}")
             loader = PyPDFLoader(file_path)
             pages = loader.load_and_split()
@@ -145,16 +169,17 @@ async def requestUsingDocument(msg: str, context):
                 chunk_size=1
             )
             retriever = FAISS.from_documents(docs, embeddings).as_retriever()
-            
+            qa = RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
             # Wrap retrievers in a Tool
             tools.append(
                 Tool(
                     args_schema=DocumentInput,
                     name=file["name"], 
                     description=f"{file['name']}{os.getenv('GPT_SYSTEM_SETTING_FILE')}",
-                    func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
+                    func=lambda query: qa({"question": query})
                 )
             )
+            #func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
         llm = AzureChatOpenAI(
             max_tokens=os.getenv('AZURE_OPENAI_MAX_TOKEN_FOR_DOC_SEARCH'),
             temperature=0,

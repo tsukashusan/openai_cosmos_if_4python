@@ -12,6 +12,7 @@ import langchainDocument
 
 load_dotenv()
 
+DEBUG_MODE = bool(os.getenv('DEBUG_MODE')) or False
 completion_format_user = {'role' : 'user', 'content' : None}
 max_token = int(os.getenv('MAX_TOKEN'))
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
@@ -89,7 +90,7 @@ async def request_openai_search_document(req: func.HttpRequest,
                    outputDocument: func.Out[func.Document]) -> func.HttpResponse:
     s : str = req.get_body().decode('utf-8')
     req = json.loads(s)
-    ret = await langchainDocument.requestUsingDocument(req['message'], context)
+    ret = await langchainDocument.requestUsingDocument(req['message'], context, DEBUG_MODE)
     responseHeaders : dict[str, str] = {"Access-Control-Allow-Origin": "*", 'Content-Type': "application/json"}
     if ret.result is not None:
         uuida : str = str(uuid.uuid4())

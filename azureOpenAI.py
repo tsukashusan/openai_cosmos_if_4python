@@ -5,7 +5,7 @@ from dataclasses_json import dataclass_json
 from enum import Enum
 from dotenv import load_dotenv
 from langchain.chat_models import ChatOpenAI
-from langchain import SQLDatabase
+from langchain.utilities.sql_database import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
 import logging
 from sqlalchemy.engine import URL
