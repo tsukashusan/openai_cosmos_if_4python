@@ -176,7 +176,7 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
                     args_schema=DocumentInput,
                     name=file["name"], 
                     description=f"{file['name']}{os.getenv('GPT_SYSTEM_SETTING_FILE')}",
-                    func=lambda query: qa({"question": query})
+                    func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
                 )
             )
             #func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
