@@ -179,7 +179,6 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
                     func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
                 )
             )
-            #func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
         llm = AzureChatOpenAI(
             max_tokens=os.getenv('AZURE_OPENAI_MAX_TOKEN_FOR_DOC_SEARCH'),
             temperature=0,
