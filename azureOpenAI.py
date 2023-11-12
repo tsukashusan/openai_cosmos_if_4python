@@ -120,7 +120,7 @@ class azureOpenAI:
             host=os.getenv('MS_SQL_HOST'),
             port=int(os.getenv('MS_SQL_PORT')),
             database=os.getenv('MS_SQL_DATABASE'),
-            query={"driver": "ODBC Driver 17 for SQL Server"})
+            query={"driver": "ODBC Driver 18 for SQL Server"})
         db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
         openai.api_type = "azure" 
         openai.api_base = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/"

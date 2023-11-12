@@ -1,8 +1,7 @@
 import os
 import platform
 import logging
-#from pydantic import BaseModel, Field
-from pydantic.v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain.agents import Tool
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
