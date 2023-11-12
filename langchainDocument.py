@@ -3,7 +3,7 @@ import platform
 import logging
 from pydantic import BaseModel, Field
 from langchain.agents import Tool
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings import AzureOpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.document_loaders import PyPDFLoader
@@ -160,7 +160,7 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
             #                                              model='text-embedding-ada-002'))
             #https://github.com/jerryjliu/llama_index/issues/947
             
-            embeddings = OpenAIEmbeddings(
+            embeddings = AzureOpenAIEmbeddings(
                 deployment=os.getenv('AZURE_OPENAI_MODEL_FOR_EMBEDDING_NAME'),
                 model="text-embedding-ada-002",
                 openai_api_base=f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/",
