@@ -4,12 +4,12 @@ from dataclasses import dataclass, field, asdict
 from dataclasses_json import dataclass_json
 from enum import Enum
 from dotenv import load_dotenv
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models import AzureChatOpenAI
 from langchain.utilities.sql_database import SQLDatabase
 from langchain_experimental.sql import SQLDatabaseChain
 import logging
 from sqlalchemy.engine import URL
-import openai
+#import openai
 import re
 import json
 
@@ -50,11 +50,14 @@ class ResultAzureOpenAI:
 class azureOpenAI:
      
     _unique_instance = None
-    OPEN_AI_URL : str = "https://%s.openai.azure.com/openai/deployments/%s/chat/completions?api-version=%s" % (os.getenv('AZURE_OPENAI_API_INSTANCE_NAME'), os.getenv('AZURE_OPENAI_API_INSTANCE_NAME'), os.getenv('AZURE_OPENAI_API_VERSION'))
+    OPEN_AI_URL : str = "https://%s.openai.azure.com/openai/deployments/%s/chat/completions?api-version=%s" % (os.getenv('AZURE_OPENAI_API_INSTANCE_NAME'), os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME'), os.getenv('AZURE_OPENAI_API_VERSION'))
     OPEN_AI_KEY : str = os.getenv('AZURE_OPENAI_API_KEY')
     MAX_TOKEN : int = int(os.getenv('MAX_TOKEN'))
     GPT_SYSTEM_SETTING : str = os.getenv('GPT_SYSTEM_SETTING')
-
+    os.environ["OPENAI_API_TYPE"] = "azure"
+    os.environ["OPENAI_API_VERSION"] = os.getenv('AZURE_OPENAI_API_VERSION')
+    #os.environ["OPENAI_API_BASE"] = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com"
+    os.environ["OPENAI_API_KEY"] = OPEN_AI_KEY
     ## コンストラクタ呼び出しさせず、インスタンス取得をget_instanceに限定する。
     ## get_instanceからインスタンス取得を可能にするため、__init__は使用しない。
     ## 初期化時に、__new__が__init__よりも先に呼び出される。
@@ -123,19 +126,11 @@ class azureOpenAI:
             database=os.getenv('MS_SQL_DATABASE'),
             query={"driver": driver})
         db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
-        openai.api_type = "azure" 
-        openai.api_base = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/"
-        openai.api_version = os.getenv('AZURE_OPENAI_API_VERSION')
-        openai.api_key = os.getenv('AZURE_OPENAI_API_KEY')
-        llm = ChatOpenAI(
-            model_kwargs={"engine" : os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME')},
-            temperature=0,
-            openai_api_key = openai.api_key
+        llm = AzureChatOpenAI(
+            model=os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME"),
+            openai_api_key = self.OPEN_AI_KEY,
+            azure_endpoint= f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com"
         )
-        #llm = AzureOpenAI(
-        #    deployment_name=os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME'),
-        #    temperature=0
-        #    )
         db_chain = SQLDatabaseChain.from_llm(llm=llm, db=db, verbose=True)
         ret = db_chain.run(request.msg)
 

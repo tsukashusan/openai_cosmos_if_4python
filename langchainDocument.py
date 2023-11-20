@@ -1,7 +1,7 @@
 import os
 import platform
 import logging
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 from langchain.agents import Tool
 from langchain.embeddings import AzureOpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
@@ -10,8 +10,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.chains import RetrievalQA
 from langchain.agents import initialize_agent
 from langchain.agents import AgentType
-import openai
-from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
+from langchain.chat_models import AzureChatOpenAI
 from azureOpenAI import ResultAzureOpenAI, ChatCompletion
 from urllib.parse import urlparse
 
@@ -59,16 +58,26 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
     if agent is None:
         foldername=context.function_directory
         logging.debug(foldername)
-        openai.api_type = "azure" 
-        openai.api_base = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/"
-        openai.api_version = os.getenv('AZURE_OPENAI_API_VERSION')
-        openai.api_key = os.getenv('AZURE_OPENAI_API_KEY')
-
-        llmChat = ChatOpenAI(
-            model_kwargs={"engine": os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME')},
-            temperature=0,
-            openai_api_key=openai.api_key
+        #openai.api_type = "azure" 
+        #openai.api_base = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com"
+        #openai.api_version = os.getenv('AZURE_OPENAI_API_VERSION')
+        #openai.api_key = os.getenv('AZURE_OPENAI_API_KEY')
+        llmChat = AzureChatOpenAI(
+            model=os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME"),
+            openai_api_key = os.getenv('AZURE_OPENAI_API_KEY'),
+            azure_endpoint= f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com"
         )
+        #llmChat = OpenAI(
+        #    openai_api_type = 'azure',
+        #    openai_api_version = os.getenv('AZURE_OPENAI_API_VERSION'),
+        #    azure_endpoint = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com",
+        #    openai_api_key = os.getenv('AZURE_OPENAI_API_KEY')
+        #)
+        #llmChat = ChatOpenAI(
+        #    model_kwargs={"engine": os.getenv('AZURE_OPENAI_API_DEPLOYMENT_NAME')},
+        #    temperature=0,
+        #    openai_api_key=openai.api_key
+        #)
         #llmChat =AzureChatOpenAI(
         #    max_tokens=os.getenv('AZURE_OPENAI_MAX_TOKEN_FOR_DOC_SEARCH'),
         #    temperature=0,
@@ -139,7 +148,8 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
                 }
             ]
         tools = []
-
+        funcname = ""
+        i = 0
         for file in files:
             cwd = os.getcwd()
             logging.info(f"curdir={cwd}")
@@ -163,7 +173,7 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
             embeddings = AzureOpenAIEmbeddings(
                 deployment=os.getenv('AZURE_OPENAI_MODEL_FOR_EMBEDDING_NAME'),
                 model="text-embedding-ada-002",
-                openai_api_base=f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/",
+                openai_api_base=f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/openai",
                 openai_api_key=os.getenv('AZURE_OPENAI_API_KEY'),
                 openai_api_type="azure",
                 openai_api_version=os.getenv('AZURE_OPENAI_MODEL_FOR_EMBEDDING_API'),
@@ -175,20 +185,19 @@ async def requestUsingDocument(msg: str, context, debug_mode : bool = False):
             tools.append(
                 Tool(
                     args_schema=DocumentInput,
-                    name=file["name"], 
+                    name=f"funcname{i}", 
                     description=f"{file['name']}{os.getenv('GPT_SYSTEM_SETTING_FILE')}",
-                    func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever)
+                    func=RetrievalQA.from_chain_type(llm=llmChat, retriever=retriever).run
                 )
             )
+            i = i + 1
         llm = AzureChatOpenAI(
-            max_tokens=os.getenv('AZURE_OPENAI_MAX_TOKEN_FOR_DOC_SEARCH'),
-            temperature=0,
-            openai_api_base=f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/",
-            openai_api_key=os.getenv('AZURE_OPENAI_API_KEY'),
-            openai_api_version=os.getenv('AZURE_OPENAI_API_VERSION'),
-            deployment_name=os.getenv('AZURE_OPENAI_MODEL_FOR_DOC_SEARCH'))
+            model=os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME"),
+            openai_api_key = os.getenv('AZURE_OPENAI_API_KEY'),
+            azure_endpoint= f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com"
+        )
         agent = initialize_agent(
-            agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+            agent=AgentType.OPENAI_FUNCTIONS,
             tools=tools,
             llm=llm,
             verbose=True
