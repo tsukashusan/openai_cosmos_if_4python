@@ -113,6 +113,7 @@ class azureOpenAI:
                     return ResultAzureOpenAI(None, None, result['error'])
                 
     async def requestSQL(self, request: RequestAzureOpenAI) -> ResultAzureOpenAI:
+        driver = os.getenv('MS_SQL_ODBC_DRIVER')
         connection_url = URL.create(
             "mssql+pyodbc",
             username=os.getenv('MS_SQL_USERNAME'),
@@ -120,7 +121,7 @@ class azureOpenAI:
             host=os.getenv('MS_SQL_HOST'),
             port=int(os.getenv('MS_SQL_PORT')),
             database=os.getenv('MS_SQL_DATABASE'),
-            query={"driver": "ODBC Driver 18 for SQL Server"})
+            query={"driver": driver})
         db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
         openai.api_type = "azure" 
         openai.api_base = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com/"
