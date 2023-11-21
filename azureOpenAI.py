@@ -56,7 +56,6 @@ class azureOpenAI:
     GPT_SYSTEM_SETTING : str = os.getenv('GPT_SYSTEM_SETTING')
     os.environ["OPENAI_API_TYPE"] = "azure"
     os.environ["OPENAI_API_VERSION"] = os.getenv('AZURE_OPENAI_API_VERSION')
-    #os.environ["OPENAI_API_BASE"] = f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com"
     os.environ["OPENAI_API_KEY"] = OPEN_AI_KEY
     ## コンストラクタ呼び出しさせず、インスタンス取得をget_instanceに限定する。
     ## get_instanceからインスタンス取得を可能にするため、__init__は使用しない。
@@ -128,7 +127,6 @@ class azureOpenAI:
         db = SQLDatabase.from_uri(database_uri=connection_url, include_tables=os.getenv('MS_SQL_INCLUDE_TABLE').split(','))
         llm = AzureChatOpenAI(
             model=os.getenv("AZURE_OPENAI_API_DEPLOYMENT_NAME"),
-            openai_api_key = self.OPEN_AI_KEY,
             azure_endpoint= f"https://{os.getenv('AZURE_OPENAI_API_INSTANCE_NAME')}.openai.azure.com"
         )
         db_chain = SQLDatabaseChain.from_llm(llm=llm, db=db, verbose=True)
